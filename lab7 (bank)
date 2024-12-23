@@ -1,0 +1,99 @@
+using System;
+using System.Threading;
+
+class Program
+{
+    static void Main()
+    {
+        var account = new Account(); // Создаем экземпляр счета
+        const decimal requiredAmount = 100m; // Сумма для снятия
+
+        // Поток для внесения случайных сумм
+        var depositThread = new Thread(() =>
+        {
+            PerformDeposits(account, 3); // Выполняем 3 внесения
+        });
+
+        depositThread.Start(); // Запускаем поток внесений
+
+        // Ожидание накопления необходимой суммы
+        account.WaitForBalance(requiredAmount);
+
+        // Попытка снять средства
+        if (account.TryWithdraw(requiredAmount))
+        {
+            Console.WriteLine($"Остаток на счете: {account.Balance:C}");
+        }
+    }
+
+    // Метод для выполнения внесений
+    static void PerformDeposits(Account account, int depositCount)
+    {
+        var random = new Random();
+        for (int i = 0; i < depositCount; i++)
+        {
+            decimal amountToDeposit = random.Next(10, 60);
+            account.Deposit(amountToDeposit);
+            Thread.Sleep(1000);
+        }
+    }
+}
+
+class Account
+{
+    private decimal _balance; // Баланс счета
+    private readonly object _balanceLock = new object(); // Синхронизация доступа
+
+    public decimal Balance
+    {
+        get
+        {
+            lock (_balanceLock)
+            {
+                return _balance; // Получение текущего баланса
+            }
+        }
+    }
+
+    public void Deposit(decimal amount)
+    {
+        lock (_balanceLock)
+        {
+            _balance += amount;
+            Console.WriteLine($"Внесено: {amount:C}, Текущий баланс: {Balance:C}");
+        }
+    }
+
+    public bool TryWithdraw(decimal amount)
+    {
+        lock (_balanceLock)
+        {
+            if (_balance >= amount)
+            {
+                _balance -= amount;
+                Console.WriteLine($"Снято: {amount:C}, Остаток: {Balance:C}");
+                return true;
+            }
+            else
+            {
+                Console.WriteLine($"Недостаточно средств для снятия {amount:C}. Баланс: {Balance:C}");
+                return false;
+            }
+        }
+    }
+
+    public void WaitForBalance(decimal amount)
+    {
+        while (true)
+        {
+            lock (_balanceLock)
+            {
+                if (_balance >= amount)
+                {
+                    return; // Завершаем ожидание
+                }
+            }
+            Thread.Sleep(500); // Проверяем каждые 500 мс
+        }
+    }
+}
