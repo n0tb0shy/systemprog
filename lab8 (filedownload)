@@ -1,0 +1,32 @@
+using System;
+using System.Net;
+
+class Program
+{
+    static void Main()
+    {
+        string fileUrl = "https://vscode.ru/filesForArticles/test.docx"; // URL файла для скачивания
+        string saveFolderPath = @"C:\Users\dlanor\Desktop\"; // Папка для сохранения файла
+        string fileName = "Тестовый файл.docx"; // Имя сохраненного файла
+
+        string fullFilePath = saveFolderPath + fileName;
+
+        try
+        {
+            DownloadFile(fileUrl, fullFilePath);
+            Console.WriteLine($"Файл успешно скачан и сохранен по пути: {fullFilePath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при скачивании файла: {ex.Message}");
+        }
+    }
+
+    static void DownloadFile(string url, string destinationPath)
+    {
+        using (WebClient webClient = new WebClient())
+        {
+            webClient.DownloadFile(url, destinationPath); // Скачивание файла
+        }
+    }
+}
