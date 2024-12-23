@@ -1,0 +1,126 @@
+using System;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Text;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Путь к входному файлу
+        string inputFilePath = @"C:\Users\dlanor\Desktop\input.docx";
+
+        // Путь к выходному файлу
+        string outputFilePath = @"C:\Users\dlanor\Desktop\result.txt";
+
+        try
+        {
+            // Проверка существования входного файла
+            if (!File.Exists(inputFilePath))
+            {
+                throw new FileNotFoundException($"Файл {inputFilePath} не найден.");
+            }
+
+            // Чтение содержимого .docx файла
+            string text = ExtractTextFromDocx(inputFilePath);
+
+            // Подсчёт символов
+            int totalCharacters = text.Length;
+
+            // Подсчёт символов без пробелов
+            int charactersWithoutSpaces = text.Count(c => !char.IsWhiteSpace(c));
+
+            // Подсчёт слов
+            int wordCount = text.Split(new char[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Length;
+
+            // Формирование результата
+            string results = $"Количество символов: {totalCharacters}\n" +
+                             $"Количество символов без пробелов: {charactersWithoutSpaces}\n" +
+                             $"Количество слов: {wordCount}";
+
+            // Вывод результатов в консоль
+            Console.WriteLine(results);
+
+            // Запись результатов в выходной файл
+            File.WriteAllText(outputFilePath, results);
+            Console.WriteLine($"Результаты успешно сохранены в файл: {outputFilePath}");
+        }
+        catch (FileNotFoundException ex)
+        {
+            Console.WriteLine("Ошибка: файл не найден.");
+            Console.WriteLine(ex.Message);
+        }
+        catch (IOException ex)
+        {
+            Console.WriteLine("Ошибка при работе с файлами.");
+            Console.WriteLine(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Произошла непредвиденная ошибка.");
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Извлечение текста из файла .docx
+    /// </summary>
+    /// <param name="filePath">Путь к файлу .docx</param>
+    /// <returns>Содержимое файла в виде строки</returns>
+    static string ExtractTextFromDocx(string filePath)
+    {
+        StringBuilder extractedText = new StringBuilder();
+
+        // Открываем .docx файл как zip-архив
+        using (ZipArchive archive = ZipFile.OpenRead(filePath))
+        {
+            // Находим файл с основным содержимым документа (обычно это "word/document.xml")
+            var documentEntry = archive.GetEntry("word/document.xml");
+            if (documentEntry == null)
+            {
+                throw new Exception("Файл document.xml не найден в архиве .docx.");
+            }
+
+            // Читаем содержимое файла document.xml
+            using (StreamReader reader = new StreamReader(documentEntry.Open()))
+            {
+                string xmlContent = reader.ReadToEnd();
+
+                // Извлекаем текст из XML (простой способ, очищающий теги)
+                extractedText.Append(ExtractPlainTextFromXml(xmlContent));
+            }
+        }
+
+        return extractedText.ToString();
+    }
+
+    /// <summary>
+    /// Простейший метод для извлечения текста из XML
+    /// </summary>
+    /// <param name="xmlContent">XML-содержимое</param>
+    /// <returns>Чистый текст без тегов</returns>
+    static string ExtractPlainTextFromXml(string xmlContent)
+    {
+        bool insideTag = false;
+        StringBuilder plainText = new StringBuilder();
+
+        foreach (char c in xmlContent)
+        {
+            if (c == '<')
+            {
+                insideTag = true;
+            }
+            else if (c == '>')
+            {
+                insideTag = false;
+            }
+            else if (!insideTag)
+            {
+                plainText.Append(c);
+            }
+        }
+
+        return plainText.ToString();
+    }
+}
