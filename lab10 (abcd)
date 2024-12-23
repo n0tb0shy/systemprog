@@ -1,0 +1,49 @@
+using System;
+using System.IO;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        string filePath = "C:\\Users\\dlanor\\Desktop\\123.txt"; // Путь к файлу
+
+        try
+        {
+            string content = File.ReadAllText(filePath); // Чтение текста из файла
+            int maxPairs = GetMaxPairs(content); // Получаем максимальное количество подряд идущих пар
+            Console.WriteLine("Подряд ABCD = " + maxPairs);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Ошибка: " + e.Message); // Обработка ошибок
+        }
+    }
+
+    // Метод для подсчета максимального количества подряд идущих пар "AB" и "CB"
+    static int GetMaxPairs(string content)
+    {
+        int maxPairs = 0; // Максимальное количество подряд идущих пар
+        int currentPairs = 0; // Текущее количество подряд идущих пар
+
+        for (int i = 0; i < content.Length - 1; i++) // Проходим по строке
+        {
+            string pair = content.Substring(i, 2); // Берем подстроку длиной 2
+
+            if (pair == "AB" || pair == "CB") // Если пара "AB" или "CB"
+            {
+                currentPairs++; // Увеличиваем количество пар
+                i++; // Перемещаемся на 1 символ вперед, так как пара состоит из двух символов
+            }
+            else
+            {
+                maxPairs = Math.Max(maxPairs, currentPairs); // Обновляем максимальное количество пар
+                currentPairs = 0; // Сбрасываем счетчик
+            }
+        }
+
+        // Проверка на последнюю последовательность
+        maxPairs = Math.Max(maxPairs, currentPairs);
+
+        return maxPairs;
+    }
+}
