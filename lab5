@@ -1,0 +1,88 @@
+using System;
+using System.Threading;
+
+class RabbitAndTurtleRace
+{
+    static void Main(string[] args)
+    {
+        AnimalThread rabbit = new AnimalThread("Кролик", ThreadPriority.Normal);
+        AnimalThread turtle = new AnimalThread("Черепаха", ThreadPriority.BelowNormal);
+
+        rabbit.Start();
+        turtle.Start();
+
+        // Ожидание завершения потоков
+        rabbit.Join();
+        turtle.Join();
+
+        Console.WriteLine("Гонка завершена!");
+    }
+}
+
+class AnimalThread
+{
+    private Thread thread;
+    private string name;
+    private int distanceCovered = 0;
+    private static readonly int finishLine = 100; // Дистанция, которую нужно преодолеть
+    private static readonly object lockObj = new object(); // Для синхронизации доступа
+    private static int leaderDistance = 0; // Максимальная дистанция, пройденная участником
+
+    public AnimalThread(string name, ThreadPriority priority)
+    {
+        this.name = name;
+        thread = new Thread(Run);
+        thread.Priority = priority;
+    }
+
+    public void Start()
+    {
+        thread.Start();
+    }
+
+    public void Join()
+    {
+        thread.Join();
+    }
+
+    private void Run()
+    {
+        Random random = new Random();
+
+        while (distanceCovered < finishLine)
+        {
+            // Животное преодолевает случайное расстояние от 1 до 10 метров
+            int distance = random.Next(1, 11);
+
+            lock (lockObj)
+            {
+                distanceCovered += distance;
+                Console.WriteLine($"{name} пробежал{(distance > 1 ? " " : "а ")}{distance} метров. Всего: {distanceCovered} метров.");
+
+                // Обновляем лидера
+                if (distanceCovered > leaderDistance)
+                {
+                    leaderDistance = distanceCovered;
+                }
+
+                // Проверяем, нужно ли изменять приоритет
+                ManagePriorities();
+            }
+
+            // Задержка для реалистичности
+            Thread.Sleep(500);
+        }
+
+        Console.WriteLine($"{name} достиг финиша!");
+    }
+
+    private void ManagePriorities()
+    {
+        // Если участник отстает от лидера более чем на 20 метров, увеличиваем его приоритет
+        if (leaderDistance - distanceCovered > 20 && thread.Priority < ThreadPriority.Highest)
+        {
+            thread.Priority++;
+            Console.WriteLine($"{name} увеличил уровень приоритета до {thread.Priority}.");
+        }
+    }
+}
