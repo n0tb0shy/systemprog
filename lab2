@@ -1,0 +1,64 @@
+class Program
+{
+    static void Main()
+    {
+        Random random = new Random();
+        int n = 1000;
+
+        // Генерация массива случайных неотрицательных чисел
+        int[] nums = GenerateRandomArray(n, 0, 10000);
+
+        // Поиск максимальных значений
+        long maxR = FindMax(nums, num => true);
+        long maxR_14 = FindMax(nums, num => num % 14 == 0);
+        long maxR_7 = FindMax(nums, num => num % 7 == 0);
+        long maxR_2 = FindMax(nums, num => num % 2 == 0);
+
+        // Вывод результата
+        Console.WriteLine("Сгенерированный массив:");
+        Console.WriteLine(string.Join(", ", nums));
+
+        long result = CalculateResult(maxR, maxR_14, maxR_7, maxR_2);
+        Console.WriteLine(result != -1 ? $"Наше число: {result}" : "-1");
+    }
+
+    // Метод для генерации массива случайных чисел
+    static int[] GenerateRandomArray(int size, int minValue, int maxValue)
+    {
+        Random random = new Random();
+        int[] array = new int[size];
+        for (int i = 0; i < size; i++)
+        {
+            array[i] = random.Next(minValue, maxValue + 1);
+        }
+        return array;
+    }
+
+    // Метод для поиска максимального значения, соответствующего условию
+    static long FindMax(int[] nums, Func<int, bool> condition)
+    {
+        long max = 0;
+        foreach (int num in nums)
+        {
+            if (condition(num) && num > max)
+            {
+                max = num;
+            }
+        }
+        return max;
+    }
+
+    // Метод для вычисления результата
+    static long CalculateResult(long maxR, long maxR_14, long maxR_7, long maxR_2)
+    {
+        if (maxR * maxR_14 >= maxR_2 * maxR_7)
+        {
+            return maxR * maxR_14;
+        }
+        else if (maxR * maxR_14 < maxR_2 * maxR_7)
+        {
+            return maxR_2 * maxR_7;
+        }
+        return -1;
+    }
+}
