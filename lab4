@@ -1,0 +1,22 @@
+using System;
+
+class Program
+{
+    static void Main()
+    {
+        Console.WriteLine("Введите количество денег:");
+
+        // Проверка корректности ввода
+        if (int.TryParse(Console.ReadLine(), out int money) && money > 0)
+        {
+            int freeChocolates = money / 3; // Количество бесплатных шоколадок по акции
+            int totalChocolates = money + freeChocolates;
+
+            Console.WriteLine($"По акции: за каждые 3 шоколадки 1 бесплатно. Вы получите {totalChocolates} шоколадок.");
+        }
+        else
+        {
+            Console.WriteLine("Ошибка: введите положительное целое число.");
+        }
+    }
+}
