@@ -1,0 +1,37 @@
+using System;
+using System.Threading;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Создаем и настраиваем потоки
+        Thread chickenThread = new Thread(PrintChicken);
+        Thread eggThread = new Thread(PrintEgg);
+
+        // Запускаем потоки
+        chickenThread.Start();
+        eggThread.Start();
+
+        // Ждем завершения потоков
+        chickenThread.Join();
+        eggThread.Join();
+
+        // Ожидаем завершения потоков и выводим, какой поток завершился последним
+        Console.WriteLine("Оба потока завершены.");
+    }
+
+    // Метод, который выполняется в потоке, выводит "Курица"
+    static void PrintChicken()
+    {
+        Thread.Sleep(500); // Задержка, чтобы показать эффект параллельной работы потоков
+        Console.WriteLine("Курица");
+    }
+
+    // Метод, который выполняется в потоке, выводит "Яйцо"
+    static void PrintEgg()
+    {
+        Thread.Sleep(1000); // Задержка, чтобы показать эффект параллельной работы потоков
+        Console.WriteLine("Яйцо");
+    }
+}
