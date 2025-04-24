@@ -1,0 +1,130 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class Program
+{
+    private const int QuadrantCount = 4;
+
+    static void Main()
+    {
+        // Чтение количества точек
+        int pointCount = int.Parse(Console.ReadLine());
+
+        // Инициализация структур для хранения данных по четвертям
+        QuadrantData[] quadrants = new QuadrantData[QuadrantCount];
+        for (int i = 0; i < QuadrantCount; i++)
+        {
+            quadrants[i] = new QuadrantData();
+        }
+
+        // Обработка каждой точки
+        ProcessPoints(pointCount, quadrants);
+
+        // Определение четверти с максимальным количеством точек
+        int selectedQuadrantIndex = DetermineDominantQuadrant(quadrants);
+
+        // Нахождение оптимальной точки в выбранной четверти
+        var optimalPoint = FindOptimalPoint(quadrants[selectedQuadrantIndex].Points);
+
+        // Вывод результатов
+        DisplayResults(selectedQuadrantIndex, quadrants[selectedQuadrantIndex].Count, optimalPoint);
+    }
+
+    private static void ProcessPoints(int pointCount, QuadrantData[] quadrants)
+    {
+        for (int i = 0; i < pointCount; i++)
+        {
+            string[] coordinates = Console.ReadLine().Split();
+            int x = int.Parse(coordinates[0]);
+            int y = int.Parse(coordinates[1]);
+
+            // Пропускаем точки на осях координат
+            if (x == 0 || y == 0) continue;
+
+            // Определяем четверть и добавляем точку
+            int quadrantIndex = DetermineQuadrantIndex(x, y);
+            quadrants[quadrantIndex].AddPoint((x, y));
+        }
+    }
+
+    private static int DetermineQuadrantIndex(int x, int y)
+    {
+        if (x > 0 && y > 0) return 0;      // 1-я четверть
+        if (x < 0 && y > 0) return 1;      // 2-я четверть
+        if (x < 0 && y < 0) return 2;      // 3-я четверть
+        return 3;                           // 4-я четверть
+    }
+
+    private static int DetermineDominantQuadrant(QuadrantData[] quadrants)
+    {
+        int selectedIndex = 0;
+        int maxCount = quadrants[0].Count;
+
+        for (int i = 1; i < QuadrantCount; i++)
+        {
+            if (quadrants[i].Count > maxCount)
+            {
+                maxCount = quadrants[i].Count;
+                selectedIndex = i;
+            }
+            else if (quadrants[i].Count == maxCount)
+            {
+                // При равном количестве точек выбираем по минимальному R
+                double currentR = quadrants[selectedIndex].MinRadius;
+                double newR = quadrants[i].MinRadius;
+
+                if (newR < currentR || (newR == currentR && i < selectedIndex))
+                {
+                    selectedIndex = i;
+                }
+            }
+        }
+
+        return selectedIndex;
+    }
+
+    private static (int x, int y, double r) FindOptimalPoint(List<(int x, int y)> points)
+    {
+        var optimal = (x: 0, y: 0, r: double.MaxValue);
+
+        foreach (var point in points)
+        {
+            double radius = Math.Min(Math.Abs(point.x), Math.Abs(point.y));
+            if (radius < optimal.r)
+            {
+                optimal = (point.x, point.y, radius);
+            }
+        }
+
+        return optimal;
+    }
+
+    private static void DisplayResults(int quadrantIndex, int pointCount, (int x, int y, double r) point)
+    {
+        Console.WriteLine($"K = {quadrantIndex + 1}");
+        Console.WriteLine($"M = {pointCount}");
+        Console.WriteLine($"A = ({point.x}, {point.y})");
+        Console.WriteLine($"R = {point.r}");
+    }
+}
+
+class QuadrantData
+{
+    public List<(int x, int y)> Points { get; } = new List<(int x, int y)>();
+    public int Count => Points.Count;
+
+    public void AddPoint((int x, int y) point)
+    {
+        Points.Add(point);
+    }
+
+    public double MinRadius
+    {
+        get
+        {
+            if (Points.Count == 0) return double.MaxValue;
+            return Points.Min(p => Math.Min(Math.Abs(p.x), Math.Abs(p.y)));
+        }
+    }
+}
