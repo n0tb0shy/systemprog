@@ -1,0 +1,150 @@
+using System;
+using System.Collections.Generic;
+
+class CoordinateAnalyzer
+{
+    static void Main()
+    {
+        int pointCount = ReadPointCount();
+        List<(int x, int y)>[] quadrants = InitializeQuadrants();
+        
+        ProcessPoints(pointCount, quadrants);
+        (int bestQuadrant, int maxPoints) = FindBestQuadrant(quadrants);
+        (var bestPoint, int minRadius) = FindBestPointInQuadrant(quadrants[bestQuadrant - 1]);
+        
+        DisplayResults(bestQuadrant, maxPoints, bestPoint, minRadius);
+    }
+
+    static int ReadPointCount()
+    {
+        return int.Parse(Console.ReadLine());
+    }
+
+    static List<(int x, int y)>[] InitializeQuadrants()
+    {
+        var quadrants = new List<(int x, int y)>[4];
+        for (int i = 0; i < 4; i++)
+        {
+            quadrants[i] = new List<(int x, int y)>();
+        }
+        return quadrants;
+    }
+
+    static void ProcessPoints(int pointCount, List<(int x, int y)>[] quadrants)
+    {
+        for (int i = 0; i < pointCount; i++)
+        {
+            string[] coordinates = Console.ReadLine().Split();
+            int x = int.Parse(coordinates[0]);
+            int y = int.Parse(coordinates[1]);
+
+            if (x == 0 || y == 0) continue;
+
+            int quadrantIndex = DetermineQuadrantIndex(x, y);
+            if (quadrantIndex >= 0)
+            {
+                quadrants[quadrantIndex].Add((x, y));
+            }
+        }
+    }
+
+    static int DetermineQuadrantIndex(int x, int y)
+    {
+        if (x > 0 && y > 0) return 0;
+        if (x < 0 && y > 0) return 1;
+        if (x < 0 && y < 0) return 2;
+        if (x > 0 && y < 0) return 3;
+        return -1;
+    }
+
+    static (int quadrantNumber, int pointCount) FindBestQuadrant(List<(int x, int y)>[] quadrants)
+    {
+        int bestQuadrant = 1;
+        int maxPoints = quadrants[0].Count;
+
+        for (int i = 1; i < 4; i++)
+        {
+            if (ShouldUpdateBestQuadrant(quadrants, i, bestQuadrant - 1, maxPoints))
+            {
+                bestQuadrant = i + 1;
+                maxPoints = quadrants[i].Count;
+            }
+        }
+
+        return (bestQuadrant, maxPoints);
+    }
+
+    static bool ShouldUpdateBestQuadrant(List<(int x, int y)>[] quadrants, int currentIndex, int bestIndex, int currentMax)
+    {
+        if (quadrants[currentIndex].Count > currentMax)
+        {
+            return true;
+        }
+        
+        if (quadrants[currentIndex].Count == currentMax)
+        {
+            int currentMinR = CalculateMinRadius(quadrants[currentIndex]);
+            int bestMinR = CalculateMinRadius(quadrants[bestIndex]);
+            
+            return currentMinR < bestMinR || (currentMinR == bestMinR && currentIndex + 1 < bestIndex + 1);
+        }
+        
+        return false;
+    }
+
+    static (int x, int y, int radius) FindBestPointInQuadrant(List<(int x, int y)> points)
+    {
+        if (points.Count == 0)
+        {
+            throw new InvalidOperationException("Quadrant has no points");
+        }
+
+        var bestPoint = points[0];
+        int minRadius = CalculatePointRadius(bestPoint);
+
+        foreach (var point in points)
+        {
+            int currentRadius = CalculatePointRadius(point);
+            if (currentRadius < minRadius)
+            {
+                minRadius = currentRadius;
+                bestPoint = point;
+            }
+        }
+
+        return (bestPoint.x, bestPoint.y, minRadius);
+    }
+
+    static int CalculatePointRadius((int x, int y) point)
+    {
+        return Math.Min(Math.Abs(point.x), Math.Abs(point.y));
+    }
+
+    static int CalculateMinRadius(List<(int x, int y)> points)
+    {
+        if (points.Count == 0)
+        {
+            return int.MaxValue;
+        }
+
+        int minRadius = CalculatePointRadius(points[0]);
+        foreach (var point in points)
+        {
+            int currentRadius = CalculatePointRadius(point);
+            if (currentRadius < minRadius)
+            {
+                minRadius = currentRadius;
+            }
+        }
+
+        return minRadius;
+    }
+
+    static void DisplayResults(int quadrant, int count, (int x, int y) point, int radius)
+    {
+        Console.WriteLine($"K = {quadrant}");
+        Console.WriteLine($"M = {count}");
+        Console.WriteLine($"A = ({point.x}, {point.y})");
+        Console.WriteLine($"R = {radius}");
+    }
+}
